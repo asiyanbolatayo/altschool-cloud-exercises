@@ -1,0 +1,43 @@
+---
+- name: Setup Apache Web Server with PHP and Lagos Timezone
+  hosts: all
+  become: true
+  vars:
+    timezone: Africa/Lagos
+    index_php_content: |
+      <?php
+      echo date("F d, Y h:i:s A e", time());
+      ?>
+  tasks:
+    - name: Ensure Apache is installed
+      ansible.builtin.dnf:
+        name: httpd
+        state: present
+
+    - name: Ensure PHP is installed
+      ansible.builtin.dnf:
+        name: php
+        state: present
+
+    - name: Start and enable the httpd service
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Set the server timezone to Africa/Lagos
+      ansible.builtin.timezone:
+        name: "{{ timezone }}"
+
+    - name: Create the index.php file
+      ansible.builtin.copy:
+        dest: /var/www/html/index.php
+        content: "{{ index_php_content }}"
+        owner: apache
+        group: apache
+        mode: '0644'
+
+    - name: Restart httpd to apply changes
+      ansible.builtin.service:
+        name: httpd
+        state: restarted
